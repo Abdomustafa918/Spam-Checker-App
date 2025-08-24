@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Email Spam Classifier</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-light">
+    <div class="container py-5">
+        <h2 class="mb-4 text-center">📧 Email Spam Classifier</h2>
+        
+        <form method="post" class="shadow p-4 bg-white rounded">
+            <div class="mb-3">
+                <label for="message" class="form-label">Enter Message:</label>
+                <textarea class="form-control" name="message" id="message" rows="5" placeholder="Paste your email text here..." required></textarea>
+            </div>
+
+            <div class="mb-3">
+                <label for="model" class="form-label">Choose Model:</label>
+                <select class="form-select" name="model" id="model">
+                    {% for model in models %}
+                        <option value="{{ model }}" {% if model == selected_model %}selected{% endif %}>{{ model }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100">Classify</button>
+        </form>
+
+        {% if prediction %}
+        <div class="alert mt-4 {{ 'alert-danger' if prediction == 'Spam' else 'alert-success' }}">
+            <strong>Prediction:</strong> {{ prediction }}<br>
+            <strong>Confidence:</strong> {{ confidence }}<br>
+            <strong>Word Count:</strong> {{ word_count }}<br>
+            <strong>Top Influential Word (TF-IDF):</strong> {{ influential_word }}
+        </div>
+
+        <div class="mt-4 d-flex justify-content-center">
+            <canvas id="confidenceChart" style="max-width: 200px; max-height: 200px;"></canvas>
+        </div>
+
+        <script>
+            const ctx = document.getElementById('confidenceChart').getContext('2d');
+            const confidence = parseFloat('{{ confidence[:-1] }}');  // remove % and convert to float
+            const isSpam = '{{ prediction }}' === 'Spam';
+            
+            new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: ['Spam', 'Not Spam'],
+                    datasets: [{
+                        label: 'Confidence',
+                        data: isSpam ? [confidence, 100 - confidence] : [100 - confidence, confidence],
+                        backgroundColor: ['#dc3545', '#198754'],  // red, green
+                        borderColor: ['#fff', '#fff'],
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Prediction Confidence',
+                            font: {
+                                size: 14
+                            }
+                        },
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        </script>
+        {% endif %}
+    </div>
+</body>
+</html>
